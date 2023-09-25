@@ -33,6 +33,10 @@ func main() {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
 
+	e.GET("/webhook", func(c echo.Context) error {
+		return c.String(http.StatusOK, "Hello, World!")
+	})
+
 	e.POST("/webhook", func(c echo.Context) error {
 		if err := bot.ReplyMessage("Hello, World!"); err != nil {
 			return xerrors.Errorf("failed to reply message: %w", err)
