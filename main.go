@@ -33,6 +33,10 @@ func main() {
 		return c.NoContent(http.StatusOK)
 	})
 
+	e.POST("/", func(c echo.Context) error {
+		return c.NoContent(http.StatusOK)
+	})
+
 	e.GET("/webhook", func(c echo.Context) error {
 		return c.NoContent(http.StatusOK)
 	})
