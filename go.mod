@@ -2,7 +2,12 @@ module github.com/ryuji-cre8ive/monemana
 
 go 1.20
 
-require github.com/labstack/echo/v4 v4.11.1
+require (
+	github.com/joho/godotenv v1.5.1
+	github.com/labstack/echo/v4 v4.11.1
+	github.com/line/line-bot-sdk-go v7.8.0+incompatible
+	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2
+)
 
 require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
