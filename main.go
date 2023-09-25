@@ -15,7 +15,7 @@ func main() {
 	err := godotenv.Load()
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = ":8080"
+		port = "8080"
 	}
 
 	Secret := os.Getenv("LINE_BOT_CHANNEL_SECRET")
@@ -40,5 +40,5 @@ func main() {
 		return nil
 	})
 
-	e.Logger.Fatal(e.Start(port))
+	e.Logger.Fatal(e.Start(":" + port))
 }
