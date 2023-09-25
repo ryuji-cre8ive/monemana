@@ -13,7 +13,11 @@ import (
 
 func main() {
 	err := godotenv.Load()
-	port := ":8080"
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = ":8080"
+	}
+
 	Secret := os.Getenv("LINE_BOT_CHANNEL_SECRET")
 	Token := os.Getenv("LINE_BOT_CHANNEL_TOKEN")
 
@@ -29,15 +33,12 @@ func main() {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
 
-	e.GET("/webhook", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, World!")
+	e.POST("/webhook", func(c echo.Context) error {
+		if err := bot.ReplyMessage("Hello, World!"); err != nil {
+			return xerrors.Errorf("failed to reply message: %w", err)
+		}
+		return nil
 	})
-
-	message := linebot.NewTextMessage("Hello World!")
-
-	if _, err := bot.BroadcastMessage(message).Do(); err != nil {
-		log.Fatal(err)
-	}
 
 	e.Logger.Fatal(e.Start(port))
 }
