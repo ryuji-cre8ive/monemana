@@ -30,18 +30,18 @@ func main() {
 	}
 
 	e.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, World!")
+		return c.NoContent(http.StatusOK)
 	})
 
 	e.GET("/webhook", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, World!")
+		return c.NoContent(http.StatusOK)
 	})
 
 	e.POST("/webhook", func(c echo.Context) error {
 		if err := bot.ReplyMessage("Hello, World!"); err != nil {
 			return xerrors.Errorf("failed to reply message: %w", err)
 		}
-		return c.String(http.StatusOK, "Hello, World!")
+		return c.NoContent(http.StatusOK)
 	})
 
 	e.Logger.Fatal(e.Start(":" + port))
