@@ -12,12 +12,13 @@ type Handler struct {
 
 func New(u *usecase.Usecase) *Handler {
 	return &Handler{
-		WebhookHandler: &webhookHandler{},
+		WebhookHandler: &webhookHandler{u.Webhook},
 	}
 }
 
 func SetApi(e *echo.Echo, h *Handler) {
 	g := e.Group("/api/v1")
+	g.GET("/healthcheck", HealthCheckHandler)
 	g.POST("/webhook", h.WebhookHandler.PostWebhook)
 }
 
