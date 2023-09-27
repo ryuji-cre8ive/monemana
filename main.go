@@ -42,10 +42,23 @@ func main() {
 	})
 
 	e.POST("/webhook", func(c echo.Context) error {
-		if err := bot.ReplyMessage("Hello, World!"); err != nil {
-			return xerrors.Errorf("failed to reply message: %w", err)
+		events, err := bot.ParseRequest(c.Request())
+		if err != nil {
+			if err == linebot.ErrInvalidSignature {
+				log.Print(err)
+			}
 		}
-		return c.NoContent(http.StatusOK)
+		for _, event := range events {
+			if event.Type == linebot.EventTypeMessage {
+				switch message := event.Message.(type) {
+				case *linebot.TextMessage:
+					if _, err = bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(message.Text)).Do(); err != nil {
+						log.Print(err)
+					}
+				}
+			}
+		}
+		return nil
 	})
 
 	e.Logger.Fatal(e.Start(":" + port))
