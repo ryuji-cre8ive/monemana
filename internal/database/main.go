@@ -1,19 +1,20 @@
 package database
 
 import (
-	"database/sql"
 	"embed"
 	_ "github.com/lib/pq"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 	// migrate "github.com/rubenv/sql-migrate"
 	"os"
 )
 
 var migrationsFS embed.FS
 
-func New() (*sql.DB, error) {
+func New() (*gorm.DB, error) {
 	uri := os.Getenv("DATABASE_URL")
 
-	db, err := sql.Open("postgres", uri)
+	db, err := gorm.Open(postgres.Open(uri), &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}
@@ -27,10 +28,10 @@ func New() (*sql.DB, error) {
 	// 	return nil, err
 	// }
 
-	err = db.Ping()
-	if err != nil {
-		return nil, err
-	}
+	// err = db.Ping()
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return db, nil
 }

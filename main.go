@@ -18,7 +18,8 @@ func main() {
 	if err != nil {
 		log.Fatal(xerrors.Errorf("failed to connect to database: %w", err))
 	}
-	defer db.Close()
+	postgres, err := db.DB()
+	defer postgres.Close()
 
 	e := ui.Echo()
 
