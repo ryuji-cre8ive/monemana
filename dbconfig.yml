@@ -1,0 +1,8 @@
+development:
+  dialect: postgres
+  datasource: postgresql://postgres:mqttyq-cre8ive0525@db.snbskwhunpqwkjjshplr.supabase.co:5432/postgres
+  dir: ./internal/database/migrations/
+staging:
+  dialect: mysql
+  datasource: postgresql://postgres:mqttyq-cre8ive0525@db.snbskwhunpqwkjjshplr.supabase.co:5432/postgres
+  dir: ./internal/database/migrations/
