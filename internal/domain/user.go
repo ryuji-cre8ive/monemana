@@ -3,8 +3,7 @@ package domain
 import ()
 
 type User struct {
-	ID        string
-	FirstName string
-	LastName  string
-	Money     []Money
+	ID    string
+	Name  string
+	Money []Transaction
 }
