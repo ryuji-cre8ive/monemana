@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/ryuji-cre8ive/monemana/internal/usecase"
 
