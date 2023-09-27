@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/ryuji-cre8ive/monemana/internal/usecase"
 
@@ -22,5 +23,5 @@ func (h *webhookHandler) PostWebhook(c echo.Context) error {
 	if err != nil {
 		return xerrors.Errorf("failed to post webhook: %w", err)
 	}
-	return nil
+	return c.NoContent(200)
 }

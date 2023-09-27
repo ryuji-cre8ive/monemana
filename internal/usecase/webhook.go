@@ -23,9 +23,11 @@ func (u *webhookUsecase) PostWebhook(c echo.Context) error {
 	Token := os.Getenv("LINE_BOT_CHANNEL_TOKEN")
 
 	bot, err := linebot.New(Secret, Token)
-	fmt.Print("in webhook")
 	events, err := bot.ParseRequest(c.Request())
-	fmt.Print("events: ", events)
+	for _, event := range events {
+		fmt.Printf("events: %+v", event)
+		fmt.Print(event.Source)
+	}
 	if err != nil {
 		if err == linebot.ErrInvalidSignature {
 			fmt.Print(err)

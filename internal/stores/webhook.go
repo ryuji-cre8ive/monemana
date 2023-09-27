@@ -1,19 +1,27 @@
 package stores
 
 import (
-	"database/sql"
+	"github.com/ryuji-cre8ive/monemana/internal/domain"
+	"gorm.io/gorm"
+	"time"
 )
 
 type (
 	WebhookStore interface {
-		CreateTransaction(tx *sql.Tx) error
+		CreateTransaction(tx *gorm.Tx) error
 	}
 
 	webhookStore struct {
-		*sql.DB
+		*gorm.DB
 	}
 )
 
-func (s *webhookStore) CreateTransaction(tx *sql.Tx) error {
+func (s *webhookStore) CreateTransaction(tx *gorm.Tx) error {
+	s.DB.Create(&domain.Transaction{
+		ID:    "test",
+		Name:  "test",
+		Price: 100,
+		Date:  time.Now(),
+	})
 	return nil
 }
