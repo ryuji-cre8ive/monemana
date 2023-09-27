@@ -42,7 +42,9 @@ func main() {
 	})
 
 	e.POST("/webhook", func(c echo.Context) error {
+		log.Print("in webhook")
 		events, err := bot.ParseRequest(c.Request())
+		log.Print("events: ", events)
 		if err != nil {
 			if err == linebot.ErrInvalidSignature {
 				log.Print(err)
