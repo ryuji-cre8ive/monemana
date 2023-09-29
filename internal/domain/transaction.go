@@ -6,7 +6,7 @@ import (
 
 type Transaction struct {
 	ID     string
-	Name   string
+	Title  string
 	Price  int
 	UserID string
 	Date   time.Time
