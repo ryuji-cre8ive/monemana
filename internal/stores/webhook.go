@@ -1,6 +1,7 @@
 package stores
 
 import (
+	"github.com/google/uuid"
 	"github.com/ryuji-cre8ive/monemana/internal/domain"
 	"golang.org/x/xerrors"
 	"gorm.io/gorm"
@@ -9,10 +10,10 @@ import (
 
 type (
 	WebhookStore interface {
-		CreateTransaction(tx *gorm.Tx) error
+		CreateTransaction(tx *gorm.Tx, name string, price int, userID string) error
 		GetUser(userID string) (*domain.User, error)
 		GetAllUsers() ([]*domain.User, error)
-		CreateUser(tx *gorm.Tx, userID string, userName string) error
+		CreateUser(tx *gorm.Tx, userID string, userName string) (*domain.User, error)
 	}
 
 	webhookStore struct {
@@ -20,12 +21,14 @@ type (
 	}
 )
 
-func (s *webhookStore) CreateTransaction(tx *gorm.Tx) error {
+func (s *webhookStore) CreateTransaction(tx *gorm.Tx, title string, price int, userID string) error {
+	uuid := uuid.Must(uuid.NewRandom())
 	s.DB.Create(&domain.Transaction{
-		ID:    "test",
-		Name:  "test",
-		Price: 100,
-		Date:  time.Now(),
+		ID:     uuid.String(),
+		Title:  title,
+		Price:  price,
+		UserID: userID,
+		Date:   time.Now(),
 	})
 	return nil
 }
@@ -52,14 +55,15 @@ func (s *webhookStore) GetAllUsers() ([]*domain.User, error) {
 	return users, nil
 }
 
-func (s *webhookStore) CreateUser(tx *gorm.Tx, userID string, userName string) error {
-	result := s.DB.Create(&domain.User{
+func (s *webhookStore) CreateUser(tx *gorm.Tx, userID string, userName string) (*domain.User, error) {
+	user := &domain.User{
 		ID:           userID,
 		Name:         userName,
 		Transactions: nil,
-	})
-	if result.Error != nil {
-		return xerrors.Errorf("create user err%w", result.Error)
 	}
-	return nil
+	result := s.DB.Create(&user)
+	if result.Error != nil {
+		return nil, xerrors.Errorf("create user err%w", result.Error)
+	}
+	return user, nil
 }
