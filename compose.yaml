@@ -21,17 +21,17 @@ services:
     networks:
       - network1
 
-  server:
-    build:
-      context: .
-    ports:
-      - 8080:8080
-    env_file:
-      - .env
-    networks:
-      - network1
-    depends_on:
-      - db
+  # server:
+  #   build:
+  #     context: .
+  #   ports:
+  #     - 8080:8080
+  #   env_file:
+  #     - .env
+  #   networks:
+  #     - network1
+  #   depends_on:
+  #     - db
 networks:
   network1:
 # The commented out section below is an example of how to define a PostgreSQL
