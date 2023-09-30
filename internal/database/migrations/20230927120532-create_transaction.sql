@@ -8,7 +8,7 @@ CREATE TABLE "users" (
 CREATE TABLE Transactions (
     id text PRIMARY KEY,
     title text,
-    price integer,
+    price decimal,
     user_id text,
     date timestamp,
     CONSTRAINT FK_transactions_users FOREIGN KEY (user_id) REFERENCES "users" (id) ON DELETE CASCADE
