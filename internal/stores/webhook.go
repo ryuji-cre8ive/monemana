@@ -10,10 +10,12 @@ import (
 
 type (
 	WebhookStore interface {
-		CreateTransaction(tx *gorm.Tx, name string, price int, userID string) error
+		CreateTransaction(tx *gorm.Tx, name string, price float64, userID string) error
 		GetUser(userID string) (*domain.User, error)
 		GetAllUsers() ([]*domain.User, error)
 		CreateUser(tx *gorm.Tx, userID string, userName string) (*domain.User, error)
+		ChangeUserName(tx *gorm.Tx, userID string, userName string) (*domain.User, error)
+		AggregateTransaction() ([]*domain.User, error)
 	}
 
 	webhookStore struct {
@@ -21,7 +23,7 @@ type (
 	}
 )
 
-func (s *webhookStore) CreateTransaction(tx *gorm.Tx, title string, price int, userID string) error {
+func (s *webhookStore) CreateTransaction(tx *gorm.Tx, title string, price float64, userID string) error {
 	uuid := uuid.Must(uuid.NewRandom())
 	s.DB.Create(&domain.Transaction{
 		ID:     uuid.String(),
@@ -66,4 +68,41 @@ func (s *webhookStore) CreateUser(tx *gorm.Tx, userID string, userName string) (
 		return nil, xerrors.Errorf("create user err%w", result.Error)
 	}
 	return user, nil
+}
+
+func (s *webhookStore) ChangeUserName(tx *gorm.Tx, userID string, userName string) (*domain.User, error) {
+	user := &domain.User{}
+	result := s.DB.First(&user, "id = ?", userID)
+	if result.Error != nil {
+		return nil, xerrors.Errorf("get user err%w", result.Error)
+	}
+	user.Name = userName
+	result = s.DB.Save(&user)
+	if result.Error != nil {
+		return nil, xerrors.Errorf("save user err%w", result.Error)
+	}
+	return user, nil
+}
+
+func (s *webhookStore) AggregateTransaction() ([]*domain.User, error) {
+	users := make([]*domain.User, 0, 0)
+	result := s.DB.Debug().Preload("Transactions").Joins("LEFT JOIN transactions ON users.id = transactions.user_id").Find(&users)
+
+	uniqueUsers := make(map[string]*domain.User)
+
+	for _, user := range users {
+		// ユーザーIDをキーとしてマップに追加
+		uniqueUsers[user.ID] = user
+	}
+
+	// ユニークなユーザーを格納するスライスを作成
+	uniqueUserSlice := make([]*domain.User, 0, len(uniqueUsers))
+	for _, user := range uniqueUsers {
+		uniqueUserSlice = append(uniqueUserSlice, user)
+	}
+
+	if result.Error != nil {
+		return nil, xerrors.Errorf("get transactions err%w", result.Error)
+	}
+	return uniqueUserSlice, nil
 }

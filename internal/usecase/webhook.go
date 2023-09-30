@@ -7,6 +7,7 @@ import (
 	"github.com/ryuji-cre8ive/monemana/internal/stores"
 	"golang.org/x/xerrors"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -22,6 +23,7 @@ type (
 )
 
 func (u *webhookUsecase) PostWebhook(c echo.Context) error {
+	pattern := regexp.MustCompile("[\\s　]+")
 	Secret := os.Getenv("LINE_BOT_CHANNEL_SECRET")
 	Token := os.Getenv("LINE_BOT_CHANNEL_TOKEN")
 
@@ -48,9 +50,21 @@ func (u *webhookUsecase) PostWebhook(c echo.Context) error {
 			switch event.Message.(type) {
 			case *linebot.TextMessage:
 				text := event.Message.(*linebot.TextMessage).Text
-				if len(strings.Split(text, " ")) == 2 {
-					title, priceStr := strings.Split(text, " ")[0], strings.Split(text, " ")[1]
-					price, parseIntErr := strconv.Atoi(priceStr)
+				if strings.Contains(text, "名前変更") {
+					fmt.Println("名前変更desuyooooooooo")
+					userName := pattern.Split(text, -1)[1]
+					fmt.Println("userName", userName)
+					if _, err := u.stores.Webhook.ChangeUserName(nil, user.ID, userName); err != nil {
+						return xerrors.Errorf("change user name err: %w", err)
+					}
+					if _, err := bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage("名前変更したよ！")).Do(); err != nil {
+						return xerrors.Errorf("reply message err: %w", err)
+					}
+					return nil
+				}
+				if len(pattern.Split(text, -1)) == 2 {
+					title, priceStr := pattern.Split(text, -1)[0], pattern.Split(text, -1)[1]
+					price, parseIntErr := strconv.ParseFloat(priceStr, 64)
 					if parseIntErr != nil {
 						return xerrors.Errorf("price parse err: %w", parseIntErr)
 					}
@@ -61,9 +75,34 @@ func (u *webhookUsecase) PostWebhook(c echo.Context) error {
 						fmt.Print(err)
 					}
 				}
-				// if strings.Contains(text, "名前変更") {
 
-				// }
+				if strings.Contains(text, "集計") {
+					users, err := u.stores.Webhook.AggregateTransaction()
+					if err != nil {
+						return xerrors.Errorf("aggregate transaction err: %w", err)
+					}
+					var message string
+					aggregate := map[string]float64{}
+					for _, user := range users {
+						aggregate[string(user.Name)] = 0
+						for _, transaction := range *user.Transactions {
+							aggregate[string(user.Name)] += transaction.Price
+						}
+					}
+
+					for name, price := range aggregate {
+						fmt.Println("price", price)
+						priceStr := fmt.Sprintf("%.2f", price)
+						message += name + ": " + priceStr + "RM\n"
+					}
+					// 最後の改行文字を削除
+					if len(message) > 0 {
+						message = message[:len(message)-1]
+					}
+					if _, err := bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(message)).Do(); err != nil {
+						return xerrors.Errorf("reply message err: %w", err)
+					}
+				}
 			}
 		}
 	}
