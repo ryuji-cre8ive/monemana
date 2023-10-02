@@ -1,7 +1,7 @@
-FROM golang:1.20.0 as builder
+FROM golang:1.21.1-alpine3.18 as builder
 
 # Update CA certificates
-RUN apt-get update && apt-get install -y ca-certificates && update-ca-certificates
+RUN apk add ca-certificates
 
 WORKDIR /go/src
 
