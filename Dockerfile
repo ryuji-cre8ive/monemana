@@ -18,7 +18,11 @@ FROM scratch as runner
 
 COPY --from=builder /go/bin/main /app/main
 
-# COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-# COPY --from=build /go/bin/app /app
+# Set the PORT environment variable to 8080
+ENV PORT=8080
 
-ENTRYPOINT ["/app/main"]
+# Make sure the server listens on the correct port
+CMD ["/app/main"]
+
+# Make sure to expose the port
+EXPOSE 8080
