@@ -1,7 +1,6 @@
 FROM golang:1.20.0 as builder
 
 # Update CA certificates
-COPY cafile.pem /usr/local/share/ca-certificates/
 RUN apt-get update && apt-get install -y ca-certificates && update-ca-certificates
 
 WORKDIR /go/src
