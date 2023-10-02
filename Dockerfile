@@ -12,7 +12,8 @@ ARG GOOS=linux
 ARG GOARCH=amd64
 RUN go build \
     -o /go/bin/main \
-    -ldflags '-s -w'
+    -ldflags '-s -w' \ 
+    apk add --no-cache ca-certificates
 
 FROM scratch as runner
 
