@@ -12,8 +12,7 @@ ARG GOOS=linux
 ARG GOARCH=amd64
 RUN go build \
     -o /go/bin/main \
-    -ldflags '-s -w' \ 
-    apk add --no-cache ca-certificates
+    -ldflags '-s -w'
 
 FROM scratch as runner
 
@@ -22,6 +21,7 @@ COPY --from=builder /go/bin/main /app/main
 # Set the PORT environment variable to 8080
 ENV PORT=8080
 
+RUN apk add --no-cache ca-certificates
 # Make sure the server listens on the correct port
 CMD ["/app/main"]
 
