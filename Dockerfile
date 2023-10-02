@@ -1,5 +1,8 @@
 FROM golang:1.20.0 as builder
 
+# Update CA certificates
+RUN apt-get update && apt-get install -y ca-certificates && update-ca-certificates
+
 WORKDIR /go/src
 
 COPY go.mod go.sum ./
@@ -20,8 +23,6 @@ COPY --from=builder /go/bin/main /app/main
 
 # Set the PORT environment variable to 8080
 ENV PORT=8080
-
-RUN apk add --no-cache ca-certificates
 # Make sure the server listens on the correct port
 CMD ["/app/main"]
 
