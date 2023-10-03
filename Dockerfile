@@ -1,30 +1,12 @@
-FROM golang:1.21.1-alpine3.18 as builder
+FROM golang
 
-# Update CA certificates
-RUN apk add ca-certificates
+RUN mkdir -p /app
+WORKDIR /app
+COPY . .
 
-WORKDIR /go/src
 
-COPY go.mod go.sum ./
 RUN go mod download
 
-COPY . ./
-
-ARG CGO_ENABLED=0
-ARG GOOS=linux
-ARG GOARCH=amd64
-RUN go build \
-    -o /go/bin/main \
-    -ldflags '-s -w'
-
-FROM scratch as runner
-
-COPY --from=builder /go/bin/main /app/main
-
-# Set the PORT environment variable to 8080
-ENV PORT=8080
-# Make sure the server listens on the correct port
-CMD ["/app/main"]
-
-# Make sure to expose the port
+RUN go build -o app
 EXPOSE 8080
+ENTRYPOINT ["./app"]
