@@ -1,0 +1,8 @@
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    entrypoint: "bash"
+    args:
+      - "-cvx"
+      - docker build
+        -t asia.gcr.io/$REPO_NAME/$REPO_NAME:latest
+        .
