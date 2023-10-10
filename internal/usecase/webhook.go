@@ -37,12 +37,14 @@ func (u *webhookUsecase) PostWebhook(c echo.Context) error {
 	}
 	for _, event := range events {
 		user, err := u.stores.Webhook.GetUser(event.Source.UserID)
-		fmt.Println("user", user)
 		if err != nil {
-			fmt.Println("user not found")
-			//モック的にユーザーネームをIDと同一で登録
-			if user, err = u.stores.Webhook.CreateUser(nil, event.Source.UserID, event.Source.UserID); err != nil {
-				fmt.Println("create user err", err)
+			userProfile, profErr := bot.GetProfile(event.Source.UserID).Do()
+			if profErr != nil {
+				xerrors.Errorf("get profile err: %w", profErr)
+			}
+			userName := userProfile.DisplayName
+			if user, err = u.stores.Webhook.CreateUser(nil, event.Source.UserID, userName); err != nil {
+				xerrors.Errorf("create user err: %w", err)
 			}
 		}
 
@@ -51,9 +53,7 @@ func (u *webhookUsecase) PostWebhook(c echo.Context) error {
 			case *linebot.TextMessage:
 				text := event.Message.(*linebot.TextMessage).Text
 				if strings.Contains(text, "名前変更") {
-					fmt.Println("名前変更desuyooooooooo")
 					userName := pattern.Split(text, -1)[1]
-					fmt.Println("userName", userName)
 					if _, err := u.stores.Webhook.ChangeUserName(nil, user.ID, userName); err != nil {
 						return xerrors.Errorf("change user name err: %w", err)
 					}
@@ -72,7 +72,7 @@ func (u *webhookUsecase) PostWebhook(c echo.Context) error {
 						return xerrors.Errorf("create transaction err: %w", err)
 					}
 					if _, err := bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage("登録が完了したよ！")).Do(); err != nil {
-						fmt.Print(err)
+						xerrors.Errorf("reply message err: %w", err)
 					}
 				}
 
@@ -91,7 +91,6 @@ func (u *webhookUsecase) PostWebhook(c echo.Context) error {
 					}
 
 					for name, price := range aggregate {
-						fmt.Println("price", price)
 						priceStr := fmt.Sprintf("%.2f", price)
 						message += name + ": " + priceStr + "RM\n"
 					}
