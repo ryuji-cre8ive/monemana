@@ -14,7 +14,10 @@ var migrationsFS embed.FS
 func New() (*gorm.DB, error) {
 	uri := os.Getenv("DATABASE_URL")
 
-	db, err := gorm.Open(postgres.Open(uri), &gorm.Config{})
+	db, err := gorm.Open(postgres.New(postgres.Config{
+		DSN:                  uri,
+		PreferSimpleProtocol: true, // disables implicit prepared statement usage
+	}), &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}
