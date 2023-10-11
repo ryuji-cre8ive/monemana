@@ -5,14 +5,16 @@ import (
 )
 
 type Stores struct {
-	DB      *gorm.DB
-	Webhook WebhookStore
+	DB       *gorm.DB
+	Webhook  WebhookStore
+	Exchange ExchangeStore
 }
 
 func New(db *gorm.DB) *Stores {
 	return &Stores{
-		DB:      db,
-		Webhook: &webhookStore{db},
+		DB:       db,
+		Webhook:  &webhookStore{db},
+		Exchange: &exchangeStore{},
 	}
 }
 
