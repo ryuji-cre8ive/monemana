@@ -27,6 +27,15 @@ func (u *webhookUsecase) PostWebhook(c echo.Context) error {
 	Secret := os.Getenv("LINE_BOT_CHANNEL_SECRET")
 	Token := os.Getenv("LINE_BOT_CHANNEL_TOKEN")
 
+	exchange, err := u.stores.Exchange.GetExchangeRate()
+	if err != nil {
+		return xerrors.Errorf("get exchange rate err: %w", err)
+	}
+	jpy := exchange.Rates["JPY"]
+	myr := exchange.Rates["MYR"]
+
+	rate := jpy / myr
+
 	bot, botErr := linebot.New(Secret, Token)
 	if botErr != nil {
 		return xerrors.Errorf("linebot.New error: %w", botErr)
@@ -68,7 +77,7 @@ func (u *webhookUsecase) PostWebhook(c echo.Context) error {
 					if parseIntErr != nil {
 						return xerrors.Errorf("price parse err: %w", parseIntErr)
 					}
-					if err := u.stores.Webhook.CreateTransaction(nil, title, price, user.ID); err != nil {
+					if err := u.stores.Webhook.CreateTransaction(nil, title, price, user.ID, rate); err != nil {
 						return xerrors.Errorf("create transaction err: %w", err)
 					}
 					if _, err := bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage("登録が完了したよ！")).Do(); err != nil {

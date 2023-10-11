@@ -10,7 +10,7 @@ import (
 
 type (
 	WebhookStore interface {
-		CreateTransaction(tx *gorm.Tx, name string, price float64, userID string) error
+		CreateTransaction(tx *gorm.Tx, name string, price float64, userID string, rate float64) error
 		GetUser(userID string) (*domain.User, error)
 		GetAllUsers() ([]*domain.User, error)
 		CreateUser(tx *gorm.Tx, userID string, userName string) (*domain.User, error)
@@ -23,13 +23,14 @@ type (
 	}
 )
 
-func (s *webhookStore) CreateTransaction(tx *gorm.Tx, title string, price float64, userID string) error {
+func (s *webhookStore) CreateTransaction(tx *gorm.Tx, title string, price float64, userID string, rate float64) error {
 	uuid := uuid.Must(uuid.NewRandom())
 	s.DB.Create(&domain.Transaction{
 		ID:     uuid.String(),
 		Title:  title,
 		Price:  price,
 		UserID: userID,
+		Rate:   rate,
 		Date:   time.Now(),
 	})
 	return nil

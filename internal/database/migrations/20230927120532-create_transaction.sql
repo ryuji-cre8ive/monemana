@@ -11,6 +11,7 @@ CREATE TABLE Transactions (
     price decimal,
     user_id text,
     date timestamp,
+    rate decimal,
     CONSTRAINT FK_transactions_users FOREIGN KEY (user_id) REFERENCES "users" (id) ON DELETE CASCADE
 );
 

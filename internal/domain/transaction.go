@@ -9,5 +9,6 @@ type Transaction struct {
 	Title  string
 	Price  float64
 	UserID string
+	Rate   float64
 	Date   time.Time
 }
