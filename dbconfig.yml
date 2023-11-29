@@ -1,8 +1,8 @@
 development:
   dialect: postgres
-  datasource: ${DATABASE_URL}
+  datasource: postgres://postgres:mqttyq-cre8ive0525@db.snbskwhunpqwkjjshplr.supabase.co:6543/postgres?sslmode=disable
   dir: ./internal/database/migrations/
 staging:
   dialect: mysql
-  datasource: ${DATABASE_URL}
+  datasource: postgres://postgres:mqttyq-cre8ive0525@db.snbskwhunpqwkjjshplr.supabase.co:6543/postgres?sslmode=disable
   dir: ./internal/database/migrations/

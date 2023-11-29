@@ -3,7 +3,7 @@ up:
 	docker compose up
 
 start-local:
-	air -c .air.toml
+	go run main.go
 
 ngrok:
 	ngrok http 8080

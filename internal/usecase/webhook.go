@@ -2,14 +2,15 @@ package usecase
 
 import (
 	"fmt"
-	"github.com/labstack/echo/v4"
-	"github.com/line/line-bot-sdk-go/linebot"
-	"github.com/ryuji-cre8ive/monemana/internal/stores"
-	"golang.org/x/xerrors"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/labstack/echo/v4"
+	"github.com/line/line-bot-sdk-go/linebot"
+	"github.com/ryuji-cre8ive/monemana/internal/stores"
+	"golang.org/x/xerrors"
 )
 
 type (
@@ -31,10 +32,11 @@ func (u *webhookUsecase) PostWebhook(c echo.Context) error {
 	if err != nil {
 		return xerrors.Errorf("get exchange rate err: %w", err)
 	}
-	jpy := exchange.Rates["JPY"]
-	myr := exchange.Rates["MYR"]
+	JPY := exchange.Rates["JPY"]
+	MYR := exchange.Rates["MYR"]
+	SGD := exchange.Rates["SGD"]
 
-	rate := jpy / myr
+	rate := JPY / MYR
 
 	bot, botErr := linebot.New(Secret, Token)
 	if botErr != nil {
@@ -61,6 +63,7 @@ func (u *webhookUsecase) PostWebhook(c echo.Context) error {
 			switch event.Message.(type) {
 			case *linebot.TextMessage:
 				text := event.Message.(*linebot.TextMessage).Text
+				// 名前を変更するためのメソッド
 				if strings.Contains(text, "名前変更") {
 					userName := pattern.Split(text, -1)[1]
 					if _, err := u.stores.Webhook.ChangeUserName(nil, user.ID, userName); err != nil {
@@ -71,11 +74,30 @@ func (u *webhookUsecase) PostWebhook(c echo.Context) error {
 					}
 					return nil
 				}
+				// transactionを登録するためのメソッド
 				if len(pattern.Split(text, -1)) == 2 {
 					title, priceStr := pattern.Split(text, -1)[0], pattern.Split(text, -1)[1]
 					price, parseIntErr := strconv.ParseFloat(priceStr, 64)
 					if parseIntErr != nil {
 						return xerrors.Errorf("price parse err: %w", parseIntErr)
+					}
+					if err := u.stores.Webhook.CreateTransaction(nil, title, price, user.ID, rate); err != nil {
+						return xerrors.Errorf("create transaction err: %w", err)
+					}
+					if _, err := bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage("登録が完了したよ！")).Do(); err != nil {
+						xerrors.Errorf("reply message err: %w", err)
+					}
+				}
+				// transactionを登録するためのメソッド（通貨が異なる場合）
+				if len(pattern.Split(text, -1)) == 3 {
+					title, priceStr, currency := pattern.Split(text, -1)[0], pattern.Split(text, -1)[1], pattern.Split(text, -1)[2]
+					price, parseIntErr := strconv.ParseFloat(priceStr, 64)
+					if parseIntErr != nil {
+						return xerrors.Errorf("price parse err: %w", parseIntErr)
+					}
+					if currency == "SGD" || currency == "sgd" {
+						exchangeCurrency := MYR / SGD
+						price = price * exchangeCurrency
 					}
 					if err := u.stores.Webhook.CreateTransaction(nil, title, price, user.ID, rate); err != nil {
 						return xerrors.Errorf("create transaction err: %w", err)
