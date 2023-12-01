@@ -130,6 +130,7 @@ func (u *webhookUsecase) PostWebhook(c echo.Context) error {
 					if len(message) > 0 {
 						message = message[:len(message)-1]
 					}
+					// メッセージを送信
 					if _, err := bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(message)).Do(); err != nil {
 						return xerrors.Errorf("reply message err: %w", err)
 					}
