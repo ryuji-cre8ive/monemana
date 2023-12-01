@@ -121,7 +121,7 @@ func (u *webhookUsecase) PostWebhook(c echo.Context) error {
 							aggregate[string(user.Name)] += transaction.Price
 						}
 					}
-
+					// 集計するためのメソッド
 					for name, price := range aggregate {
 						priceStr := fmt.Sprintf("%.2f", price)
 						message += name + ": " + priceStr + "RM\n"
