@@ -25,10 +25,8 @@ func SetApi(e *echo.Echo, h *Handler) {
 		signature := c.Request().Header.Get("X-Line-Signature")
 		if utils.IsValidSignature(signature, reqBody) {
 			// 署名が正しい場合、リクエストを処理
-			fmt.Println("signature is valid")
 			// ここでリクエストの処理を行う
 		} else {
-			fmt.Println("signature is invalid")
 			// 署名が正しくない場合、エラーを返すなどの処理を行う
 			c.String(http.StatusUnauthorized, "Invalid signature")
 		}
