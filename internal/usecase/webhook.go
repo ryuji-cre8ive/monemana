@@ -36,6 +36,7 @@ func (u *webhookUsecase) PostWebhook(c echo.Context) error {
 	MYR := exchange.Rates["MYR"]
 	SGD := exchange.Rates["SGD"]
 
+	// MYRをJPYに変換するためのレート
 	rate := JPY / MYR
 
 	bot, botErr := linebot.New(Secret, Token)
