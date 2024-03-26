@@ -1,0 +1,44 @@
+name: オンボーディングタスク生成
+
+on:
+  workflow_dispatch:
+    inputs:
+      assignee:
+        description: "AssigneeのGitHubユーザー名"
+        required: true
+        type: string
+
+jobs:
+  create_issues:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Issue 1の作成
+        uses: imjohnbo/issue-bot@v3
+        with:
+          assignees: ${{ github.event.inputs.assignee }}
+          labels: "findVox"
+          title: "オンボーディングタスク1"
+          body: |
+            タスク1の内容
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Issue 2の作成
+        uses: imjohnbo/issue-bot@v3
+        with:
+          assignees: ${{ github.event.inputs.assignee }}
+          labels: "onboarding"
+          title: "オンボーディングタスク2"
+          body: |
+            タスク2の内容
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Issue 3の作成
+        uses: imjohnbo/issue-bot@v3
+        with:
+          assignees: ${{ github.event.inputs.assignee }}
+          labels: "onboarding"
+          title: "オンボーディングタスク3"
+          body: |
+            タスク3の内容
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
