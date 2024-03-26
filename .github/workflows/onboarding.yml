@@ -9,36 +9,244 @@ on:
         type: string
 
 jobs:
-  create_issues:
+  create_onboarding_issues:
     runs-on: ubuntu-latest
     steps:
-      - name: Issue 1の作成
+      - name: ${{github.event.inputs.assignee}} さんのオンボーディングの作成
         uses: imjohnbo/issue-bot@v3
         with:
           assignees: ${{ github.event.inputs.assignee }}
-          labels: "findVox"
-          title: "オンボーディングタスク1"
+          labels: "product: FindVox"
+          title: 【オンボーディング】${{github.event.inputs.assignee}} さんのオンボーディング
           body: |
-            タスク1の内容
+            # WHY
+            - やっていくぞ！
+            # WHAT
+            ## 全体的なこと
+            ### onboarding
+
+            - [ ] https://book.st-hakky.com/docs/onboarding に書いてある設定を行う
+              - [ ] GitHubの通知設定とかお忘れなく！
+              - [ ] アイコンの設定とかも！
+              - [ ] 2FAとかは設定してくださいませ
+              - [ ] Slackのプロフィールの記入もお願いします！
+
+            ### Mission/Vision/Value/culture
+
+            以下のドキュメントを読む
+
+            - [ ] mission : https://book.st-hakky.com/docs/mission
+            - [ ] vision : https://book.st-hakky.com/docs/vision
+            - [ ] value : https://book.st-hakky.com/docs/value
+            - [ ] culture : https://book.st-hakky.com/docs/culture
+
+            ### 事業概要など
+
+            以下のドキュメントを読む
+
+            - [ ] [会社HP](https://www.about.st-hakky.com/)
+            - [ ] https://github.com/hakky-inc/st-hakky-tasks/issues/195
+
+            ### 機械学習プロダクト開発支援事業 / aigleApp
+
+            以下のドキュメントを読む
+
+            - [ ] [機械学習プロダクト開発支援のLP](https://www.about.st-hakky.com/data-science)
+            - [ ] [aigleAppのLP](https://www.about.st-hakky.com/aigleapp)
+            - [ ] [Hakky*proposal_template*機械学習プロダクト開発支援事業](https://docs.google.com/presentation/d/1k0IbGFS6h0VGzcdbs0QUSMX-vuRp3PV8TLtaFJB3Be8/edit)
+            - [ ] [aigleAppの営業資料](https://docs.google.com/presentation/d/10FSboWbjuQgF7X7kJC0B98rgE9cEKNzsEaVmc3Tj-P0/edit)
+
+            ### Findvox
+
+            - [ ] [FindVoxの説明動画](https://drive.google.com/file/d/1X8izHKLdM30P3rfd1wbC_O7ddkZrTv5z/view?usp=share_link)を見る
+            - [ ] [FindVoxのはじまり](https://docs.google.com/presentation/d/148jFr7mgORTtt-4fQVqmhJnsgCdwmq4UFRfBvmXpaZU/edit#slide=id.g1d0f3a903e2_0_761)。ちょっと古くなっているので、差分はディスカッションしながら確認
+            - [ ] Figmaを「yuya.kashihara@st-hakky.com」のメールでインバイトしたのでデザインを見る
+
+            ## 開発まわりのキャッチアップ
+
+            以下のドキュメントを読む。
+
+            - [ ] Git
+              - [ ] [Gitのブランチ戦略](https://book.st-hakky.com/docs/git-branch-strategy)
+              - [ ] [GitHubへのPullRequest方法及び注意点](https://book.st-hakky.com/docs/github-how-to-pull-request)
+              - [ ] [git-secretsの設定方法](https://book.st-hakky.com/docs/git-secrets)
+                - [ ] 実際に設定お願いします
+              - [ ] [GitHubのIssueの活用方法](https://book.st-hakky.com/docs/github-issue/)
+              - [ ] [GitHubのDiscussion機能を使った運用方法](https://book.st-hakky.com/docs/github-discussion/)
+              - [ ] [GitHubのLabelsの活用方法](https://book.st-hakky.com/docs/github-label/)
+              - [ ] [GitHubのProjectsの活用方法](https://book.st-hakky.com/docs/github-projects/)
+              - [ ] [GitHubの通知に気付きやすくなる工夫](https://book.st-hakky.com/docs/github-notification/)
+            - [ ] GitHub Actions(雰囲気把握だけお願いします。読むだけとかで良いです〜)
+              - [ ] [GitHub Actionsの概要](https://book.st-hakky.com/docs/github-actions-overview/)
+              - [ ] [GitHub Actionsのactionについて](https://book.st-hakky.com/docs/github-actions-action/)
+              - [ ] [GitHub ActionsのDockerのビルドの高速化](https://book.st-hakky.com/docs/github-actions-docker-cache/)
+              - [ ] [GitHub Actionsのtimeoutの設定方法](https://book.st-hakky.com/docs/github-actions-timeout/)
+              - [ ] [GitHub Actionsをローカルでテストする方法](https://book.st-hakky.com/docs/github-actions-act/)
+              - [ ] [GitHub Actionsでの環境変数の扱いについて](https://book.st-hakky.com/docs/github-actions-environment-variable/)
+              - [ ] [GitHub Actionsでの機密情報の扱いについて](https://book.st-hakky.com/docs/github-actions-secret/)
+              - [ ] [GitHub Actions経由でAWSのECR/ECSを更新](https://book.st-hakky.com/docs/github-actions-oidc-for-ecr-and-ecs/)
+
+            ## Handbook
+
+            - [ ] [Handbook - Introduction](https://book.st-hakky.com/docs/handbook-introduction)を読んで、ドキュメントの作成環境を構築すること
+
+            ## 初回ミーティングでやること
+
+            - [ ]
+
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Issue 2の作成
+      - name: Google Cloudのキャッチアップの作成
         uses: imjohnbo/issue-bot@v3
         with:
           assignees: ${{ github.event.inputs.assignee }}
-          labels: "onboarding"
-          title: "オンボーディングタスク2"
+          labels: "product: FindVox"
+          title: "【FindVox】Google Cloudのキャッチアップをする"
           body: |
-            タスク2の内容
+            # WHY
+
+            - FindVoxで使っているGoogle cloud周りのキャッチアップをする。キャッチアップすると言っても実際には使ってみないとわからないとかなので、一旦は呼んでへぇーって思うだけでおk
+            - 弊社独自の話とかもあるので、そこら辺を確認する
+
+            # WHAT
+
+            ## Google Cloudについて
+
+            - [ ] 概要
+              - [ ] https://book.st-hakky.com/docs/about-google-cloud/
+            - [ ] iam
+              - [ ] https://book.st-hakky.com/docs/how-to-use-workload-identity-gha/
+            - [ ] billing
+              - [ ] https://book.st-hakky.com/docs/how-to-use-billing-export/
+              - [ ] https://book.st-hakky.com/docs/about-billing-export/
+            - [ ] storage
+              - [ ] https://book.st-hakky.com/docs/about-cloud-storage/
+              - [ ] https://book.st-hakky.com/docs/how-to-use-cloud-storage-api/
+              - [ ] https://book.st-hakky.com/docs/gcs-signed-urls/
+            - [ ] pubsub
+              - [ ] https://book.st-hakky.com/docs/about-pubsub/
+            - [ ] network
+              - [ ] https://book.st-hakky.com/docs/about-google-cloud-load-balancing/
+              - [ ] https://book.st-hakky.com/docs/about-google-cloud-serverless-neg/
+            - [ ] serverless
+              - [ ] https://book.st-hakky.com/docs/about-cloud-run/
+              - [ ] https://book.st-hakky.com/docs/about-cloud-functions/
+            - [ ] database
+              - [ ] https://book.st-hakky.com/docs/about-cloud-sql/
+              - [ ] https://book.st-hakky.com/docs/about-firestore/
+              - [ ] https://book.st-hakky.com/docs/firestore-local-emulator/
+              - [ ] https://book.st-hakky.com/docs/connect-private-cloud-sql-via-vm/
+            - [ ] transcoder api
+              - [ ] https://book.st-hakky.com/docs/transcoder-api-basic/
+              - [ ] https://book.st-hakky.com/docs/transcoder-api-tutorial/
+            - [ ] monitoring
+              - [ ] https://book.st-hakky.com/docs/about-google-cloud-monitoring/
+              - [ ] https://book.st-hakky.com/docs/detail-google-cloud-logging/
+            - [ ] security
+              - [ ] https://book.st-hakky.com/docs/about-google-cloud-armor/
+            - [ ] scheduler
+              - [ ] https://book.st-hakky.com/docs/how-to-use-cloud-scheduler/
+            - [ ] workflows
+              - [ ] https://book.st-hakky.com/docs/about-google-cloud-workflows
+            - [ ] cdn
+              - [ ] https://book.st-hakky.com/docs/about-cloud-cdn/
+              - [ ] https://book.st-hakky.com/docs/cloud-cdn-signed-url-cookie/
+
+            ## Hakky独自のインフラ周りの話
+
+            - [ ] インフラで権限エラーとかになったり、Sentryのアカウントが欲しい時は #\_supportっていうSlack Channelでjinさんに連絡してアカウントを付与してもらう
+              - [ ] Google Cloudのコンソールは入れると思うので入ってみる。sandbox環境が欲しい時は、jinさんにその旨を連絡して作ってもらうこと
+              - [ ] Sentryのアカウントを使うので、jinさんに行って付与してもらうこと。その際FindVoxの開発者であることを伝えること
+            - [ ] 各種共有
+              - [ ] https://github.com/hakky-inc/st-hakky-tasks/discussions/1651
+              - [ ] https://github.com/hakky-inc/st-hakky-tasks/discussions/1588
+              - [ ] https://github.com/hakky-inc/st-hakky-tasks/discussions/1270
+            - [ ] インフラリソース
+              - [ ] https://github.com/hakky-inc/infrastructure で一言管理している。軽くコードをブラウズするとよき
+
+            ## IaC : Terraform
+
+            - [ ] https://book.st-hakky.com/docs/terraform-guideline/
+            - [ ] https://book.st-hakky.com/docs/install-terraform-by-tfenv/
+
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Issue 3の作成
+      - name: QAフローについて把握タスクの作成
         uses: imjohnbo/issue-bot@v3
         with:
           assignees: ${{ github.event.inputs.assignee }}
-          labels: "onboarding"
-          title: "オンボーディングタスク3"
+          labels: "product: FindVox"
+          title: "【FindVox】QAフローについて把握する"
           body: |
-            タスク3の内容
+            # WHY
+
+            - プロダクトのQAを順次行うサイクルを作っている
+            - 機能リリースなどがあるたびに都度都度実施しているのだが、その内容について把握する
+
+            # WHAT
+
+            - [ ] マニュアルを確認する
+              - [ ] [QA運用マニュアル](https://docs.google.com/document/d/1N06KUqpkwyRJ4FFfu7_UfcVMcu_MAxXc6tBw-F6xIps/edit)
+              - [ ] [QA シート管理](https://docs.google.com/document/d/1CoGXOXReyjNmR1cCoJr6tzqbywQyyAzmFJG5Pdaat4M/edit)
+
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: ローカルで起動させてみるタスクの作成
+        uses: imjohnbo/issue-bot@v3
+        with:
+          assignees: ${{ github.event.inputs.assignee }}
+          labels: "product: FindVox"
+          title: "【FindVox】ローカルで起動させてみる"
+          body: |
+            # WHY
+
+            - https://github.com/hakky-inc/findvox のREADMEなどを読みながら起動させてみる
+            - わからないところは、 @takaya1992 さんに聞くこと
+
+            # WHAT
+
+            - [ ] 起動させる
+            - [ ] わかりにくかったところがあればREADMEを更新する
+
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: dev環境に上がっているFindVoxの機能を使ってみるタスクの作成
+        uses: imjohnbo/issue-bot@v3
+        with:
+          assignees: ${{ github.event.inputs.assignee }}
+          labels: "product: FindVox"
+          title: "【FindVox】dev環境に上がっているFindVoxの機能を使ってみる"
+          body: |
+            # WHY
+
+            - オンボーディングとして、既存のFindVoxの機能を触ってみる
+
+            # WHAT
+
+            https://dev.findvox.st-hakky.com/ にアクセスして、次のことをやってみる。気づいたこととか「これバグじゃないか？」みたいなことがあればissueにまずはコメントしてみる。コメント例は
+
+            - https://github.com/hakky-inc/st-hakky-tasks/issues/1516
+            - https://github.com/hakky-inc/st-hakky-tasks/issues/1686
+            - https://github.com/hakky-inc/st-hakky-tasks/issues/2109
+
+            が参考になると思われる
+
+            ## タスク
+
+            - [ ] 会員登録
+            - [ ] ログイン
+            - [ ] ログアウト
+            - [ ] プロフィールの編集
+            - [ ] チーム作成
+            - [ ] チーム編集
+            - [ ] チームの追加
+            - [ ] ユーザー招待
+            - [ ] プロジェクトの作成
+            - [ ] プロジェクトの編集
+            - [ ] スクリプトの作成
+            - [ ] インタビューの作成
+            - [ ] インタビューの編集
+            - [ ] インタビューで動画をあげてみる
+
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
