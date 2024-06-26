@@ -9,7 +9,7 @@
 # https://github.com/docker/awesome-compose
 services:
   db:
-    image: postgres
+    image: postgres:latest
     environment:
       POSTGRES_PASSWORD: mysecretpassword
       POSTGRES_USER: myuser
@@ -30,6 +30,8 @@ services:
       - .env
     networks:
       - network1
+    volumes:
+      - .:/app
     depends_on:
       - db
 networks:
