@@ -2,20 +2,23 @@ package usecase
 
 import (
 	"fmt"
-	"os"
-	"regexp"
-	"strconv"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/line/line-bot-sdk-go/linebot"
+	"github.com/ryuji-cre8ive/monemana/internal/domain"
 	"github.com/ryuji-cre8ive/monemana/internal/stores"
 	"golang.org/x/xerrors"
 )
 
 type (
 	WebhookUsecase interface {
-		PostWebhook(c echo.Context) error
+		CreateTransaction(c echo.Context, title string, price uint64, userId string, targetUserId []string, roomId string) error
+		AggregateTransaction(c echo.Context, roomId string) (string, error)
+		GetUser(userId string) (*domain.User, error)
+		CreateUser(c echo.Context, userId string, name string) error
+		CheckUserExists(c echo.Context, userId string) (bool, error)
+		UpdateUserName(c echo.Context, userId string, name string) error
 	}
 
 	webhookUsecase struct {
@@ -23,121 +26,97 @@ type (
 	}
 )
 
-func (u *webhookUsecase) PostWebhook(c echo.Context) error {
-	pattern := regexp.MustCompile("[\\s　]+")
-	Secret := os.Getenv("LINE_BOT_CHANNEL_SECRET")
-	Token := os.Getenv("LINE_BOT_CHANNEL_TOKEN")
-
-	exchange, err := u.stores.Exchange.GetExchangeRate()
+func (u *webhookUsecase) AggregateTransaction(c echo.Context, roomId string) (string, error) {
+	transactions, err := u.stores.Webhook.AggregateTransaction(roomId)
+	aggregateMessage := ""
 	if err != nil {
-		return xerrors.Errorf("get exchange rate err: %w", err)
+		return "", xerrors.Errorf("aggregate transaction err: %w", err)
 	}
-	JPY := exchange.Rates["JPY"]
-	MYR := exchange.Rates["MYR"]
-	SGD := exchange.Rates["SGD"]
 
-	// MYRをJPYに変換するためのレート
-	rate := JPY / MYR
+	// ユーザーごとの支払いを集計
+	userTransactions := make(map[string]map[string]int64)
+	for _, transaction := range transactions {
+		if userTransactions[transaction.UserID] == nil {
+			userTransactions[transaction.UserID] = make(map[string]int64)
+		}
+		userTransactions[transaction.UserID][transaction.TargetUserID] += int64(transaction.Price)
+	}
 
-	bot, botErr := linebot.New(Secret, Token)
-	if botErr != nil {
-		return xerrors.Errorf("linebot.New error: %w", botErr)
+	// 相互の支払いを差し引き
+	finalBalances := make(map[string]map[string]int64)
+	for user, targets := range userTransactions {
+		for target, amount := range targets {
+			if finalBalances[user] == nil {
+				finalBalances[user] = make(map[string]int64)
+			}
+			finalBalances[user][target] = amount - userTransactions[target][user]
+		}
 	}
-	events, parseErr := bot.ParseRequest(c.Request())
-	if parseErr != nil {
-		return xerrors.Errorf("bot.ParseRequest error: %w", parseErr)
-	}
-	for _, event := range events {
-		user, err := u.stores.Webhook.GetUser(event.Source.UserID)
+
+	// 結果を出力
+	for user, targets := range finalBalances {
+		user, err := u.GetUser(user)
 		if err != nil {
-			userProfile, profErr := bot.GetProfile(event.Source.UserID).Do()
-			if profErr != nil {
-				xerrors.Errorf("get profile err: %w", profErr)
-			}
-			userName := userProfile.DisplayName
-			if user, err = u.stores.Webhook.CreateUser(nil, event.Source.UserID, userName); err != nil {
-				xerrors.Errorf("create user err: %w", err)
-			}
+			return "", err
 		}
-
-		if event.Type == linebot.EventTypeMessage {
-			switch event.Message.(type) {
-			case *linebot.TextMessage:
-				text := event.Message.(*linebot.TextMessage).Text
-				// 名前を変更するためのメソッド
-				if strings.Contains(text, "名前変更") {
-					userName := pattern.Split(text, -1)[1]
-					if _, err := u.stores.Webhook.ChangeUserName(nil, user.ID, userName); err != nil {
-						return xerrors.Errorf("change user name err: %w", err)
-					}
-					if _, err := bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage("名前変更したよ！")).Do(); err != nil {
-						return xerrors.Errorf("reply message err: %w", err)
-					}
-					return nil
+		for target, balance := range targets {
+			if balance > 0 {
+				targetUser, err := u.GetUser(target)
+				if err != nil {
+					return "", err
 				}
-				// transactionを登録するためのメソッド
-				if len(pattern.Split(text, -1)) == 2 {
-					title, priceStr := pattern.Split(text, -1)[0], pattern.Split(text, -1)[1]
-					price, parseIntErr := strconv.ParseFloat(priceStr, 64)
-					if parseIntErr != nil {
-						return xerrors.Errorf("price parse err: %w", parseIntErr)
-					}
-					if err := u.stores.Webhook.CreateTransaction(nil, title, price, user.ID, rate); err != nil {
-						return xerrors.Errorf("create transaction err: %w", err)
-					}
-					if _, err := bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage("登録が完了したよ！")).Do(); err != nil {
-						xerrors.Errorf("reply message err: %w", err)
-					}
-				}
-				// transactionを登録するためのメソッド（通貨が異なる場合）
-				if len(pattern.Split(text, -1)) == 3 {
-					title, priceStr, currency := pattern.Split(text, -1)[0], pattern.Split(text, -1)[1], pattern.Split(text, -1)[2]
-					price, parseIntErr := strconv.ParseFloat(priceStr, 64)
-					if parseIntErr != nil {
-						return xerrors.Errorf("price parse err: %w", parseIntErr)
-					}
-					if currency == "SGD" || currency == "sgd" {
-						exchangeCurrency := MYR / SGD
-						price = price * exchangeCurrency
-					}
-					if err := u.stores.Webhook.CreateTransaction(nil, title, price, user.ID, rate); err != nil {
-						return xerrors.Errorf("create transaction err: %w", err)
-					}
-					if _, err := bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage("登録が完了したよ！")).Do(); err != nil {
-						xerrors.Errorf("reply message err: %w", err)
-					}
-				}
-
-				if strings.Contains(text, "集計") {
-					users, err := u.stores.Webhook.AggregateTransaction()
-					if err != nil {
-						return xerrors.Errorf("aggregate transaction err: %w", err)
-					}
-					var message string
-					aggregate := map[string]float64{}
-					for _, user := range users {
-						aggregate[string(user.Name)] = 0
-						for _, transaction := range *user.Transactions {
-							aggregate[string(user.Name)] += transaction.Price
-						}
-					}
-					// 集計するためのメソッド
-					for name, price := range aggregate {
-						priceStr := fmt.Sprintf("%.2f", price)
-						message += name + ": " + priceStr + "RM\n"
-					}
-					// 最後の改行文字を削除
-					if len(message) > 0 {
-						message = message[:len(message)-1]
-					}
-					// メッセージを送信
-					if _, err := bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(message)).Do(); err != nil {
-						return xerrors.Errorf("reply message err: %w", err)
-					}
-				}
+				aggregateMessage += fmt.Sprintf("%s→%s: %d円\n", targetUser.DisplayName, user.DisplayName, balance)
 			}
 		}
 	}
 
+	// 最後の改行文字を削除
+	aggregateMessage = strings.TrimSuffix(aggregateMessage, "\n")
+
+	return aggregateMessage, nil
+}
+
+func (u *webhookUsecase) CreateTransaction(c echo.Context, title string, price uint64, userId string, targetUserIds []string, roomId string) error {
+
+	isExistRoom, err := u.stores.Webhook.CheckRoomExists(roomId)
+
+	if !isExistRoom || err != nil {
+		if err := u.stores.Webhook.CreateRoom(nil, roomId); err != nil {
+			return xerrors.Errorf("create room err: %w", err)
+		}
+	}
+	
+	fmt.Println("i'm in create transaction")
+	for _, targetUserId := range targetUserIds {
+		id := uuid.Must(uuid.NewRandom()).String()
+		if err := u.stores.Webhook.CreateTransaction(nil, id, title, price, userId, targetUserId, roomId); err != nil {
+			return xerrors.Errorf("create transaction err: %w", err)
+		}
+	}
+	return nil
+}
+
+func (u *webhookUsecase) GetUser(userId string) (*domain.User, error) {
+	user, err := u.stores.Webhook.GetUser(userId)
+	if err != nil {
+		return nil, xerrors.Errorf("get user err: %w", err)
+	}
+	return user, nil
+}
+
+func (u *webhookUsecase) CreateUser(c echo.Context, userId string, name string) error {
+	if err := u.stores.Webhook.CreateUser(nil, userId, name); err != nil {
+		return xerrors.Errorf("create user err: %w", err)
+	}
+	return nil
+}
+
+func (u *webhookUsecase) CheckUserExists(c echo.Context, userId string) (bool, error) {
+	return u.stores.Webhook.CheckUserExists(userId)
+}
+func (u *webhookUsecase) UpdateUserName(c echo.Context, userId string, name string) error {
+	if err := u.stores.Webhook.UpdateUserName(nil, userId, name); err != nil {
+		return xerrors.Errorf("update user name err: %w", err)
+	}
 	return nil
 }

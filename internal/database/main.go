@@ -2,9 +2,11 @@ package database
 
 import (
 	"embed"
+
 	_ "github.com/lib/pq"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
 	// migrate "github.com/rubenv/sql-migrate"
 	"os"
 )
@@ -27,12 +29,12 @@ func New() (*gorm.DB, error) {
 	// 	Root:       "migrations",
 	// }
 
-	// if _, err := migrate.Exec(db, "postgres", migrations, migrate.Up); err != nil {
+	// sqlDB, err := db.DB()
+	// if err != nil {
 	// 	return nil, err
 	// }
 
-	// err = db.Ping()
-	// if err != nil {
+	// if _, err := migrate.Exec(sqlDB, "postgres", migrations, migrate.Up); err != nil {
 	// 	return nil, err
 	// }
 

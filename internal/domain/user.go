@@ -1,9 +1,10 @@
 package domain
 
-import ()
+import "time"
 
 type User struct {
-	ID           string
-	Name         string
-	Transactions *[]Transaction
+	ID          string
+	DisplayName string
+	CreatedAt   time.Time
+	DeletedAt   *time.Time
 }

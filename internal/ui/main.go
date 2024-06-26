@@ -1,11 +1,12 @@
 package ui
 
 import (
+	"net/http"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/ryuji-cre8ive/monemana/internal/usecase"
 	"github.com/ryuji-cre8ive/monemana/internal/utils"
-	"net/http"
 )
 
 type Handler struct {
@@ -25,13 +26,14 @@ func SetApi(e *echo.Echo, h *Handler) {
 		if utils.IsValidSignature(signature, reqBody) {
 			// 署名が正しい場合、リクエストを処理
 			// ここでリクエストの処理を行う
+
 		} else {
 			// 署名が正しくない場合、エラーを返すなどの処理を行う
 			c.String(http.StatusUnauthorized, "Invalid signature")
 		}
 	}))
-	g.GET("/healthcheck", HealthCheckHandler)
 	g.POST("/webhook", h.WebhookHandler.PostWebhook)
+	g.GET("/healthcheck", HealthCheckHandler)
 
 }
 

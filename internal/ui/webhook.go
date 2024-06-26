@@ -1,7 +1,15 @@
 package ui
 
 import (
+	"fmt"
+	"os"
+	"regexp"
+	"strconv"
+	"strings"
+
 	"github.com/labstack/echo/v4"
+	"github.com/line/line-bot-sdk-go/v8/linebot/messaging_api"
+	"github.com/line/line-bot-sdk-go/v8/linebot/webhook"
 	"github.com/ryuji-cre8ive/monemana/internal/usecase"
 
 	"golang.org/x/xerrors"
@@ -18,9 +26,124 @@ type (
 )
 
 func (h *webhookHandler) PostWebhook(c echo.Context) error {
-	err := h.WebhookUsecase.PostWebhook(c)
+	Secret := os.Getenv("LINE_BOT_CHANNEL_SECRET")
+	cb, err := webhook.ParseRequest(Secret, c.Request())
 	if err != nil {
-		return xerrors.Errorf("failed to post webhook: %w", err)
+		return xerrors.Errorf("webhook.ParseRequest error: %w", err)
+	}
+
+	bot, err := messaging_api.NewMessagingApiAPI(
+		os.Getenv("LINE_BOT_CHANNEL_TOKEN"),
+	)
+	relatedUserList := make([]string, 0, 0)
+	targetUserList := make([]string, 0, 0)
+
+	for _, event := range cb.Events {
+		switch event := event.(type) {
+		case webhook.MessageEvent:
+			switch source := event.Source.(type) {
+			case webhook.GroupSource:
+				switch message := event.Message.(type) {
+				case webhook.TextMessageContent:
+					if strings.Contains(message.Text, "名前変更") {
+						newName := strings.TrimSpace(strings.TrimPrefix(message.Text, "名前変更"))
+						fmt.Println(newName)
+						h.WebhookUsecase.UpdateUserName(c, source.UserId, newName)
+					}
+					if message.Text == "集計" {
+						aggregateMessage, err := h.WebhookUsecase.AggregateTransaction(c, source.GroupId)
+						if err != nil {
+							return xerrors.Errorf("aggregate transaction err: %w", err)
+						}
+						if aggregateMessage == "" {
+							if _, err := bot.ReplyMessage(&messaging_api.ReplyMessageRequest{
+								ReplyToken: event.ReplyToken,
+								Messages: []messaging_api.MessageInterface{
+									messaging_api.TextMessage{
+										Text: "まだ何も登録されてないよ😢",
+									},
+								},
+							}); err != nil {
+								xerrors.Errorf("reply message err: %w", err)
+							}
+						}
+						if _, err := bot.ReplyMessage(&messaging_api.ReplyMessageRequest{
+							ReplyToken: event.ReplyToken,
+							Messages: []messaging_api.MessageInterface{
+								messaging_api.TextMessage{
+									Text: aggregateMessage,
+								},
+							},
+						}); err != nil {
+							xerrors.Errorf("reply message err: %w", err)
+						}
+					}
+					if message.Mention != nil {
+						for _, mentionElement := range message.Mention.Mentionees {
+							switch mention := mentionElement.(type) {
+							case webhook.UserMentionee:
+								targetUserList = append(targetUserList, mention.UserId)
+							}
+						}
+
+						relatedUserList = append(targetUserList, source.UserId)
+						groupID := source.GroupId
+						userID := source.UserId
+
+						for _, userID := range relatedUserList {
+							// ユーザーが存在するかチェック
+							exists, err := h.WebhookUsecase.CheckUserExists(c, userID)
+
+							// ユーザーが存在しない場合のみ登録
+							if !exists || err != nil {
+								h.WebhookUsecase.CreateUser(c, userID, userID)
+							}
+						}
+						pattern := regexp.MustCompile("[\\s　]+")
+						re := regexp.MustCompile(`@.*?\n`)
+						text := re.ReplaceAllString(message.Text, "")
+
+						splitText := pattern.Split(text, -1)
+						if len(splitText) < 2 {
+							if _, err := bot.ReplyMessage(&messaging_api.ReplyMessageRequest{
+								ReplyToken: event.ReplyToken,
+								Messages: []messaging_api.MessageInterface{
+									messaging_api.TextMessage{
+										Text: "フォーマットが正しくないかも😢",
+									},
+								},
+							}); err != nil {
+								xerrors.Errorf("reply message err: %w", err)
+							}
+							return xerrors.Errorf("text split error: insufficient parts")
+						}
+						title, priceStr := splitText[0], splitText[1]
+						price, parseIntErr := strconv.ParseUint(priceStr, 10, 64)
+						if parseIntErr != nil {
+							return xerrors.Errorf("price parse err: %w", parseIntErr)
+						}
+
+						TransactionErr := h.WebhookUsecase.CreateTransaction(c, title, price, userID, targetUserList, groupID)
+						if TransactionErr != nil {
+							return xerrors.Errorf("failed to create transaction: %w", TransactionErr)
+						}
+						if _, err := bot.ReplyMessage(&messaging_api.ReplyMessageRequest{
+							ReplyToken: event.ReplyToken,
+							Messages: []messaging_api.MessageInterface{
+								messaging_api.TextMessage{
+									Text: "登録完了👍",
+								},
+							},
+						}); err != nil {
+							xerrors.Errorf("reply message err: %w", err)
+						}
+					}
+				}
+			}
+		}
+		if err != nil {
+			return xerrors.Errorf("failed to post webhook: %w", err)
+		}
 	}
 	return c.NoContent(200)
 }
