@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"os"
 	"regexp"
 	"strconv"
@@ -32,9 +31,6 @@ func (h *webhookHandler) PostWebhook(c echo.Context) error {
 		return xerrors.Errorf("webhook.ParseRequest error: %w", err)
 	}
 
-	bot, err := messaging_api.NewMessagingApiAPI(
-		os.Getenv("LINE_BOT_CHANNEL_TOKEN"),
-	)
 	relatedUserList := make([]string, 0, 0)
 	targetUserList := make([]string, 0, 0)
 
@@ -47,8 +43,10 @@ func (h *webhookHandler) PostWebhook(c echo.Context) error {
 				case webhook.TextMessageContent:
 					if strings.Contains(message.Text, "名前変更") {
 						newName := strings.TrimSpace(strings.TrimPrefix(message.Text, "名前変更"))
-						fmt.Println(newName)
 						h.WebhookUsecase.UpdateUserName(c, source.UserId, newName)
+						if err := replyMessage(event.ReplyToken, "名前変更完了👍"); err != nil {
+							return xerrors.Errorf("failed to reply message: %w", err)
+						}
 					}
 					if message.Text == "集計" {
 						aggregateMessage, err := h.WebhookUsecase.AggregateTransaction(c, source.GroupId)
@@ -56,26 +54,12 @@ func (h *webhookHandler) PostWebhook(c echo.Context) error {
 							return xerrors.Errorf("aggregate transaction err: %w", err)
 						}
 						if aggregateMessage == "" {
-							if _, err := bot.ReplyMessage(&messaging_api.ReplyMessageRequest{
-								ReplyToken: event.ReplyToken,
-								Messages: []messaging_api.MessageInterface{
-									messaging_api.TextMessage{
-										Text: "まだ何も登録されてないよ😢",
-									},
-								},
-							}); err != nil {
-								xerrors.Errorf("reply message err: %w", err)
+							if err := replyMessage(event.ReplyToken, "まだ何も登録されてないよ😢"); err != nil {
+								return xerrors.Errorf("failed to reply message: %w", err)
 							}
 						}
-						if _, err := bot.ReplyMessage(&messaging_api.ReplyMessageRequest{
-							ReplyToken: event.ReplyToken,
-							Messages: []messaging_api.MessageInterface{
-								messaging_api.TextMessage{
-									Text: aggregateMessage,
-								},
-							},
-						}); err != nil {
-							xerrors.Errorf("reply message err: %w", err)
+						if err := replyMessage(event.ReplyToken, aggregateMessage); err != nil {
+							return xerrors.Errorf("failed to reply message: %w", err)
 						}
 					}
 					if message.Mention != nil {
@@ -105,17 +89,9 @@ func (h *webhookHandler) PostWebhook(c echo.Context) error {
 
 						splitText := pattern.Split(text, -1)
 						if len(splitText) < 2 {
-							if _, err := bot.ReplyMessage(&messaging_api.ReplyMessageRequest{
-								ReplyToken: event.ReplyToken,
-								Messages: []messaging_api.MessageInterface{
-									messaging_api.TextMessage{
-										Text: "フォーマットが正しくないかも😢",
-									},
-								},
-							}); err != nil {
-								xerrors.Errorf("reply message err: %w", err)
+							if err := replyMessage(event.ReplyToken, "フォーマットが正しくないかも😢"); err != nil {
+								return xerrors.Errorf("failed to reply message: %w", err)
 							}
-							return xerrors.Errorf("text split error: insufficient parts")
 						}
 						title, priceStr := splitText[0], splitText[1]
 						price, parseIntErr := strconv.ParseUint(priceStr, 10, 64)
@@ -127,30 +103,16 @@ func (h *webhookHandler) PostWebhook(c echo.Context) error {
 						if TransactionErr != nil {
 							return xerrors.Errorf("failed to create transaction: %w", TransactionErr)
 						}
-						if _, err := bot.ReplyMessage(&messaging_api.ReplyMessageRequest{
-							ReplyToken: event.ReplyToken,
-							Messages: []messaging_api.MessageInterface{
-								messaging_api.TextMessage{
-									Text: "登録完了👍",
-								},
-							},
-						}); err != nil {
-							xerrors.Errorf("reply message err: %w", err)
+						if err := replyMessage(event.ReplyToken, "登録完了👍"); err != nil {
+							return xerrors.Errorf("failed to reply message: %w", err)
 						}
 					}
 				}
 			}
 		case webhook.JoinEvent:
 			joinMessage := "グループに招待してくれてありがとう🥺\n使い方を説明するね👍\nまずは全員が名前変更してね。やり方はこうだよ\n```\n名前変更 <あなたの名前>\n```\nそうすると名前が変更されてみやすくなるよ🙌\n次に登録方法だよ\n```@<友達の名前>\n<商品の名前> <値段>\n```\nで登録できるよ！例としては以下の通りだよ\n```\n@田中\n苺大福 380\n```\nで登録できるよ！\n最後に集計方法だよ。\n```\n集計\n```\nで集計できるよ！\nわからないことがあったらX（旧Twitter）の@ryuji_vlogにお問い合わせください😢"
-			if _, err := bot.ReplyMessage(&messaging_api.ReplyMessageRequest{
-				ReplyToken: event.ReplyToken,
-				Messages: []messaging_api.MessageInterface{
-					messaging_api.TextMessage{
-						Text: joinMessage,
-					},
-				},
-			}); err != nil {
-				xerrors.Errorf("reply message err: %w", err)
+			if err := replyMessage(event.ReplyToken, joinMessage); err != nil {
+				return xerrors.Errorf("failed to reply message: %w", err)
 			}
 		}
 		if err != nil {
@@ -158,4 +120,23 @@ func (h *webhookHandler) PostWebhook(c echo.Context) error {
 		}
 	}
 	return c.NoContent(200)
+}
+func replyMessage(token string, message string) error {
+	bot, err := messaging_api.NewMessagingApiAPI(
+		os.Getenv("LINE_BOT_CHANNEL_TOKEN"),
+	)
+	if err != nil {
+		return xerrors.Errorf("bot err: %w", err)
+	}
+	if _, err := bot.ReplyMessage(&messaging_api.ReplyMessageRequest{
+		ReplyToken: token,
+		Messages: []messaging_api.MessageInterface{
+			messaging_api.TextMessage{
+				Text: message,
+			},
+		},
+	}); err != nil {
+		xerrors.Errorf("reply message err: %w", err)
+	}
+	return nil
 }
