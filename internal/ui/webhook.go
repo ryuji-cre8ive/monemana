@@ -140,6 +140,18 @@ func (h *webhookHandler) PostWebhook(c echo.Context) error {
 					}
 				}
 			}
+		case webhook.JoinEvent:
+			joinMessage := "グループに招待してくれてありがとう🥺\n使い方を説明するね👍\nまずは全員が名前変更してね。やり方はこうだよ\n```\n名前変更 <あなたの名前>\n```\nそうすると名前が変更されてみやすくなるよ🙌\n次に登録方法だよ\n```@<友達の名前>\n<商品の名前> <値段>\n```\nで登録できるよ！例としては以下の通りだよ\n```\n@田中\n苺大福 380\n```\nで登録できるよ！\n最後に集計方法だよ。\n```\n集計\n```\nで集計できるよ！\nわからないことがあったらX（旧Twitter）の@ryuji_vlogにお問い合わせください😢"
+			if _, err := bot.ReplyMessage(&messaging_api.ReplyMessageRequest{
+				ReplyToken: event.ReplyToken,
+				Messages: []messaging_api.MessageInterface{
+					messaging_api.TextMessage{
+						Text: joinMessage,
+					},
+				},
+			}); err != nil {
+				xerrors.Errorf("reply message err: %w", err)
+			}
 		}
 		if err != nil {
 			return xerrors.Errorf("failed to post webhook: %w", err)

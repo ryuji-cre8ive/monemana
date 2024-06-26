@@ -26,13 +26,13 @@ func SetApi(e *echo.Echo, h *Handler) {
 		if utils.IsValidSignature(signature, reqBody) {
 			// 署名が正しい場合、リクエストを処理
 			// ここでリクエストの処理を行う
-
+			g.POST("/webhook", h.WebhookHandler.PostWebhook)
 		} else {
 			// 署名が正しくない場合、エラーを返すなどの処理を行う
 			c.String(http.StatusUnauthorized, "Invalid signature")
 		}
 	}))
-	g.POST("/webhook", h.WebhookHandler.PostWebhook)
+
 	g.GET("/healthcheck", HealthCheckHandler)
 
 }
