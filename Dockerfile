@@ -1,20 +1,31 @@
-FROM golang:1.22.4-bullseye
+# syntax=docker/dockerfile:1
 
-RUN mkdir -p /app
+# Stage 1: Build the Go application
+FROM golang:1.22.4 AS builder
+
+# Set the Current Working Directory inside the container
 WORKDIR /app
-COPY . .
 
-# airのインストール
-RUN go install github.com/air-verse/air@latest
+# Copy go.mod and go.sum files
+COPY go.mod go.sum ./
 
-# 必要なモジュールのダウンロード
+# Download all dependencies. Dependencies will be cached if the go.mod and go.sum files are not changed
 RUN go mod download
 
-# airの設定ファイルをコピー
-COPY .air.toml /app/.air.toml
+# Copy the source from the current directory to the Working Directory inside the container
+COPY . .
 
-# ポートの公開
+# Build the Go app
+RUN go build -o main .
+
+# Stage 2: Run the Go application
+FROM gcr.io/distroless/base-debian10
+
+# Copy the Pre-built binary file from the previous stage
+COPY --from=builder /app/main /app/main
+
+# Expose port 8080 to the outside world
 EXPOSE 8080
 
-# airを使ってアプリケーションを起動
-CMD ["air"]
+# Command to run the executable
+CMD ["/app/main"]
