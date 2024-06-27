@@ -107,7 +107,7 @@ func (h *webhookHandler) PostWebhook(c echo.Context) error {
 							return xerrors.Errorf("failed to reply message: %w", err)
 						}
 					} else {
-						if err := replyMessage(event.ReplyToken, "登録されてないコマンドかも😢\n```\n名前変更 <あなたの名前>\n```\nで名前変更できるよ！\n```@<友達の名前>\n<商品の名前> <値段>\n```\nで登録できるよ！"); err != nil {
+						if err := replyMessage(event.ReplyToken, "登録されてないコマンドかも😢"); err != nil {
 							return xerrors.Errorf("failed to reply message: %w", err)
 						}
 					}
