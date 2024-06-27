@@ -62,6 +62,21 @@ func (h *webhookHandler) PostWebhook(c echo.Context) error {
 							return xerrors.Errorf("failed to reply message: %w", err)
 						}
 					}
+					if message.Text == "削除" {
+						isDeleted, err := h.WebhookUsecase.DeleteTransaction(c, source.GroupId, message.QuotedMessageId)
+						if err != nil {
+							return xerrors.Errorf("delete transaction err: %w", err)
+						}
+						if isDeleted {
+							if err := replyMessage(event.ReplyToken, "削除完了👍"); err != nil {
+								return xerrors.Errorf("failed to reply message: %w", err)
+							}
+						} else {
+							if err := replyMessage(event.ReplyToken, "削除できなかったみたい😢\nもう一回試してみてね🥺"); err != nil {
+								return xerrors.Errorf("failed to reply message: %w", err)
+							}
+						}
+					}
 					if message.Mention != nil {
 						for _, mentionElement := range message.Mention.Mentionees {
 							switch mention := mentionElement.(type) {
@@ -73,6 +88,7 @@ func (h *webhookHandler) PostWebhook(c echo.Context) error {
 						relatedUserList = append(targetUserList, source.UserId)
 						groupID := source.GroupId
 						userID := source.UserId
+						messageID := message.Id
 
 						for _, userID := range relatedUserList {
 							// ユーザーが存在するかチェック
@@ -99,15 +115,11 @@ func (h *webhookHandler) PostWebhook(c echo.Context) error {
 							return xerrors.Errorf("price parse err: %w", parseIntErr)
 						}
 
-						TransactionErr := h.WebhookUsecase.CreateTransaction(c, title, price, userID, targetUserList, groupID)
+						TransactionErr := h.WebhookUsecase.CreateTransaction(c, title, price, userID, targetUserList, groupID, messageID)
 						if TransactionErr != nil {
 							return xerrors.Errorf("failed to create transaction: %w", TransactionErr)
 						}
 						if err := replyMessage(event.ReplyToken, "登録完了👍"); err != nil {
-							return xerrors.Errorf("failed to reply message: %w", err)
-						}
-					} else {
-						if err := replyMessage(event.ReplyToken, "登録されてないコマンドかも😢"); err != nil {
 							return xerrors.Errorf("failed to reply message: %w", err)
 						}
 					}

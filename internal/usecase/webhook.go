@@ -13,12 +13,13 @@ import (
 
 type (
 	WebhookUsecase interface {
-		CreateTransaction(c echo.Context, title string, price uint64, userId string, targetUserId []string, roomId string) error
+		CreateTransaction(c echo.Context, title string, price uint64, userId string, targetUserId []string, roomId string, messageId string) error
 		AggregateTransaction(c echo.Context, roomId string) (string, error)
 		GetUser(userId string) (*domain.User, error)
 		CreateUser(c echo.Context, userId string, name string) error
 		CheckUserExists(c echo.Context, userId string) (bool, error)
 		UpdateUserName(c echo.Context, userId string, name string) error
+		DeleteTransaction(c echo.Context, roomId string, messageId string) (bool, error)
 	}
 
 	webhookUsecase struct {
@@ -76,7 +77,7 @@ func (u *webhookUsecase) AggregateTransaction(c echo.Context, roomId string) (st
 	return aggregateMessage, nil
 }
 
-func (u *webhookUsecase) CreateTransaction(c echo.Context, title string, price uint64, userId string, targetUserIds []string, roomId string) error {
+func (u *webhookUsecase) CreateTransaction(c echo.Context, title string, price uint64, userId string, targetUserIds []string, roomId string, messageId string) error {
 
 	isExistRoom, err := u.stores.Webhook.CheckRoomExists(roomId)
 
@@ -85,11 +86,10 @@ func (u *webhookUsecase) CreateTransaction(c echo.Context, title string, price u
 			return xerrors.Errorf("create room err: %w", err)
 		}
 	}
-	
-	fmt.Println("i'm in create transaction")
+
 	for _, targetUserId := range targetUserIds {
 		id := uuid.Must(uuid.NewRandom()).String()
-		if err := u.stores.Webhook.CreateTransaction(nil, id, title, price, userId, targetUserId, roomId); err != nil {
+		if err := u.stores.Webhook.CreateTransaction(nil, id, title, price, userId, targetUserId, roomId, messageId); err != nil {
 			return xerrors.Errorf("create transaction err: %w", err)
 		}
 	}
@@ -119,4 +119,11 @@ func (u *webhookUsecase) UpdateUserName(c echo.Context, userId string, name stri
 		return xerrors.Errorf("update user name err: %w", err)
 	}
 	return nil
+}
+func (u *webhookUsecase) DeleteTransaction(c echo.Context, roomId string, messageId string) (bool, error) {
+	isDeleted, err := u.stores.Webhook.DeleteTransaction(nil, roomId, messageId)
+	if err != nil {
+		return false, xerrors.Errorf("delete transaction err: %w", err)
+	}
+	return isDeleted, nil
 }

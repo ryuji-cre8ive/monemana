@@ -11,7 +11,7 @@ import (
 
 type (
 	WebhookStore interface {
-		CreateTransaction(tx *gorm.Tx, id string, title string, price uint64, userID string, targetUserID string, roomID string) error
+		CreateTransaction(tx *gorm.Tx, id string, title string, price uint64, userID string, targetUserID string, roomID string, messageID string) error
 		GetUser(userID string) (*domain.User, error)
 		GetAllUsers() ([]*domain.User, error)
 		CreateUser(tx *gorm.Tx, userID string, userName string) error
@@ -21,6 +21,7 @@ type (
 		CheckUserExists(userID string) (bool, error)
 		CheckRoomExists(roomID string) (bool, error)
 		UpdateUserName(tx *gorm.Tx, userID string, userName string) error
+		DeleteTransaction(tx *gorm.Tx, roomId string, messageId string) (bool, error)
 	}
 
 	webhookStore struct {
@@ -28,7 +29,7 @@ type (
 	}
 )
 
-func (s *webhookStore) CreateTransaction(tx *gorm.Tx, id string, title string, price uint64, userID string, targetUserID string, roomID string) error {
+func (s *webhookStore) CreateTransaction(tx *gorm.Tx, id string, title string, price uint64, userID string, targetUserID string, roomID string, messageID string) error {
 	s.DB.Create(&domain.Transaction{
 		ID:           id,
 		Title:        title,
@@ -36,6 +37,7 @@ func (s *webhookStore) CreateTransaction(tx *gorm.Tx, id string, title string, p
 		UserID:       userID,
 		TargetUserID: targetUserID,
 		RoomID:       roomID,
+		MessageID:    messageID,
 		CreatedAt:    time.Now(),
 		DeletedAt:    nil,
 	})
@@ -80,7 +82,7 @@ func (s *webhookStore) CreateUser(tx *gorm.Tx, userID string, userName string) e
 
 func (s *webhookStore) AggregateTransaction(roomId string) ([]*domain.Transaction, error) {
 	transactions := make([]*domain.Transaction, 0, 0)
-	result := s.DB.Where("room_id = ?", roomId).Find(&transactions)
+	result := s.DB.Where("room_id = ? AND deleted_at IS NULL", roomId).Find(&transactions)
 
 	if result.Error != nil {
 		return nil, xerrors.Errorf("get transactions err%w", result.Error)
@@ -143,4 +145,16 @@ func (s *webhookStore) UpdateUserName(tx *gorm.Tx, userID string, userName strin
 		return result.Error
 	}
 	return nil
+}
+
+func (s *webhookStore) DeleteTransaction(tx *gorm.Tx, roomId string, messageId string) (bool, error) {
+	result := s.DB.Model(&domain.Transaction{}).Where("room_id = ? AND message_id = ?", roomId, messageId).Update("deleted_at", time.Now())
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return false, nil
+	}
+	return true, nil
 }
