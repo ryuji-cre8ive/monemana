@@ -16,7 +16,7 @@ RUN go mod download
 COPY . .
 
 # Build the Go app
-RUN go build -o main .
+RUN CGO_ENABLED=0 go build -o main .
 
 # Stage 2: Run the Go application
 FROM gcr.io/distroless/base-debian10
