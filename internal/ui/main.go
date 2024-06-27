@@ -6,7 +6,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/ryuji-cre8ive/monemana/internal/usecase"
-	"github.com/ryuji-cre8ive/monemana/internal/utils"
 )
 
 type Handler struct {
@@ -21,18 +20,19 @@ func New(u *usecase.Usecase) *Handler {
 
 func SetApi(e *echo.Echo, h *Handler) {
 	g := e.Group("/api/v1")
-	g.Use(middleware.BodyDump(func(c echo.Context, reqBody, resBody []byte) {
-		signature := c.Request().Header.Get("X-Line-Signature")
-		if utils.IsValidSignature(signature, reqBody) {
-			// 署名が正しい場合、リクエストを処理
-			// ここでリクエストの処理を行う
-			g.POST("/webhook", h.WebhookHandler.PostWebhook)
-		} else {
-			// 署名が正しくない場合、エラーを返すなどの処理を行う
-			c.String(http.StatusUnauthorized, "Invalid signature")
+	authMiddleware := func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			signature := c.Request().Header.Get("X-Line-Signature")
+			userAgent := c.Request().Header.Get("User-Agent")
+			if signature != "" && userAgent == "LineBotWebhook/2.0" {
+				return next(c)
+			} else {
+				return c.String(http.StatusUnauthorized, "Invalid signature or User-Agent")
+			}
 		}
-	}))
+	}
 
+	g.POST("/webhook", h.WebhookHandler.PostWebhook, authMiddleware)
 	g.GET("/healthcheck", HealthCheckHandler)
 
 }
