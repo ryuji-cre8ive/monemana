@@ -114,7 +114,7 @@ func (h *webhookHandler) PostWebhook(c echo.Context) error {
 				}
 			}
 		case webhook.JoinEvent:
-			joinMessage := "グループに招待してくれてありがとう🥺\n使い方を説明するね👍\nまずは全員が名前変更してね。やり方はこうだよ\n```\n名前変更 <あなたの名前>\n```\nそうすると名前が変更されてみやすくなるよ🙌\n次に登録方法だよ\n```\n@<友達の名前>\n<商品の名前> <値段>\n```\nで登録できるよ！こんな感じで送ってね！\n```\n@田中\n苺大福 380\n```\n\n最後に集計方法だよ！\n```\n集計\n```\nで集計できるよ！\nわからないことがあったらX（旧Twitter）の@ryuji_vlogにお問い合わせてね😢"
+			joinMessage := "グループに招待してくれてありがとう🥺\n使い方を説明するね👍\nまずは全員が名前変更してね。やり方はこうだよ\n```\n名前変更 <あなたの名前>\n```\nそうすると名前が変更されてみやすくなるよ🙌\n次に登録方法だよ\n```\n@<友達の名前>\n<商品の名前> <値段>\n```\nで登録できるよ！こんな感じで送ってね！\n```\n@田中\n苺大福 380\n```\n\n最後に集計方法だよ！\n```\n集計\n```\nで集計できるよ！\nわからないことがあったらX（旧Twitter）の@ryuji_vlogにお問い合わせてねgit😢"
 			if err := replyMessage(event.ReplyToken, joinMessage); err != nil {
 				return xerrors.Errorf("failed to reply message: %w", err)
 			}
