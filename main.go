@@ -1,14 +1,19 @@
 package main
 
 import (
+	"context"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"time"
+
 	"github.com/joho/godotenv"
 	"github.com/ryuji-cre8ive/monemana/internal/database"
 	"github.com/ryuji-cre8ive/monemana/internal/stores"
 	"github.com/ryuji-cre8ive/monemana/internal/ui"
 	"github.com/ryuji-cre8ive/monemana/internal/usecase"
 	"golang.org/x/xerrors"
-	"log"
-	"os"
 )
 
 func main() {
@@ -38,5 +43,18 @@ func main() {
 		log.Fatal(xerrors.Errorf("failed to create new bot: %w", err))
 	}
 
-	e.Logger.Fatal(e.Start(":" + port))
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+	go func() {
+		if err := e.Start(":1323"); err != nil && err != http.ErrServerClosed {
+			e.Logger.Fatal("shutting down the server")
+		}
+	}()
+
+	<-ctx.Done()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := e.Shutdown(ctx); err != nil {
+		e.Logger.Fatal(err)
+	}
 }
