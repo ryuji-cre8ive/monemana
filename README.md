@@ -16,14 +16,7 @@ https://denim-change-621.notion.site/28d8f73c5a1d4ba5a001b78bea83a1dd
 dbconfig.ymlのdatasourceにdbのURLをはる
 
 ## LINE BOT 使用
-
-想定人数: 2人
-（今後のアップデートで使いやすくするつもりではいます）
-
-アイテムを追加する際
-`タイトル お金`
-集計結果を確認する
-`集計`
+グループチャットで使用することが前提です
 
 
 ## ER図
